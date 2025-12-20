@@ -1,0 +1,28 @@
+from django.contrib.auth.models import User
+from django.db import models
+
+
+class TimestampedModel(models.Model):
+    """Base model with created_at and updated_at timestamps."""
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class UserOwnedModel(TimestampedModel):
+    """Base model for user-owned resources."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="%(class)s_set",
+    )
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+        ]
