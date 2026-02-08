@@ -5,12 +5,13 @@ import os
 import sys
 from pathlib import Path
 
-SRC_DIR = Path(__file__).resolve().parent
-sys.path.insert(0, str(SRC_DIR))
 
-
-def main():
+def main() -> None:
     """Run administrative tasks."""
+    # Add src/ to Python path for app discovery
+    src_dir = Path(__file__).resolve().parent / "src"
+    sys.path.insert(0, str(src_dir))
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
     try:
         from django.core.management import execute_from_command_line
