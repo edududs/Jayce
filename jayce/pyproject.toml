@@ -1,0 +1,87 @@
+# =============================================================================
+# JAYCE - AI ENGINE PACKAGE
+# =============================================================================
+# Package independente de orquestração de IA usando LangGraph.
+# Este package é uma biblioteca PURA e NÃO deve importar nada de `api`.
+#
+# Princípios:
+# - SOLID: Single Responsibility - apenas orquestração de AI
+# - Low Coupling: Zero dependências de Django ou do package `api`
+# - DI: Factory pattern para injeção de configuração
+# =============================================================================
+
+[project]
+name = "jayce"
+version = "0.1.0"
+description = "AI Engine - LangGraph orchestration library for Assistente"
+readme = "README.md"
+requires-python = ">=3.13"
+
+# Dependências APENAS de AI/ML - zero Django
+dependencies = [
+    "langchain>=1.2.9",
+    "langchain-ollama>=0.3.3",
+    "langchain-tavily>=0.2.17",
+    "langgraph>=1.0.8",
+    "pydantic>=2.12.5",
+]
+
+# Dependências opcionais para diferentes providers
+[project.optional-dependencies]
+openai = ["langchain-openai>=0.3.0"]
+anthropic = ["langchain-anthropic>=0.3.0"]
+google = ["langchain-google-genai>=2.0.0"]
+all = [
+    "langchain-openai>=0.3.0",
+    "langchain-anthropic>=0.3.0",
+    "langchain-google-genai>=2.0.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.15.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# =============================================================================
+# HATCH BUILD CONFIGURATION
+# =============================================================================
+# Define a estrutura src layout para o package
+# =============================================================================
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jayce"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+]
+
+# =============================================================================
+# PACKAGE METADATA
+# =============================================================================
+
+[project.urls]
+Homepage = "https://github.com/edududs/assistente"
+Documentation = "https://github.com/edududs/assistente#readme"
+Repository = "https://github.com/edududs/assistente"
+
+# =============================================================================
+# ENTRY POINTS (CLI opcional)
+# =============================================================================
+
+[project.scripts]
+jayce = "jayce.cli:main"
+
+# =============================================================================
+# PYRIGHT LOCAL OVERRIDES
+# =============================================================================
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.13"
