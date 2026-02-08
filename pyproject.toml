@@ -12,7 +12,9 @@ description = "Monorepo workspace para o Assistente de Produtividade com AI"
 readme = "README.md"
 requires-python = ">=3.13"
 # Workspace roots não devem ter dependências - elas vivem nos packages membros
-dependencies = []
+dependencies = [
+    "pytest>=9.0.2",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -86,8 +88,6 @@ exclude = [
     "**/node_modules",
     "**/__pycache__",
 ]
-venv = ".venv"
-venvPath = "."
 
 [tool.pytest.ini_options]
 addopts = "-s --color=yes --tb=short"
