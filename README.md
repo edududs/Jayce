@@ -1,161 +1,145 @@
-# Assistente
+# 🤖 Assistente - Sistema de Produtividade com IA
 
-Assistente pessoal inteligente voltado para produtividade e organização individual, atuando como um centro de gestão "tudo-em-um" (all-in-one). Plataforma API-first desenhada para otimizar a rotina diária através de uma arquitetura modular e integrada.
+Monorepo para um sistema de produtividade pessoal integrado com IA, construído usando **uv Workspaces**.
 
-## Diferenciais
-
-- **API-First**: Arquitetura RESTful completa, sem dependência de templates ou interfaces web
-- **Modularidade**: Sistema composto por apps Django independentes com alta coesão e baixo acoplamento
-- **Flexibilidade**: Estrutura extensível que permite adicionar novas funcionalidades sem impacto nas existentes
-- **Padrões Modernos**: Uso de Pydantic para validação, django-ninja para API e TextChoices do Django
-
-## Funcionalidades
-
-O sistema oferece um ecossistema completo para gestão pessoal através de módulos especializados:
-
-### 📋 Tarefas
-Gerenciamento de tarefas com prioridades, prazos e status de conclusão.
-
-### 📅 Calendário
-Eventos e compromissos com suporte a recorrência e frequências personalizadas.
-
-### 💰 Finanças
-Controle financeiro pessoal com categorização de receitas e despesas.
-
-### 📝 Notas
-Organização de pensamentos e anotações com sistema de tags.
-
-### 🔔 Lembretes
-Sistema de lembretes com prioridades e notificações agendadas.
-
-### 🎯 Hábitos
-Rastreamento de hábitos com frequência desejada e histórico de registros.
-
-### 📊 Projetos
-Gestão de projetos com status, prazos e tarefas associadas.
-
-### 📈 Análises
-Métricas e análises personalizadas para visualizar progresso e tendências.
-
-## Tecnologias
-
-- **Django 6.0+**: Framework web Python
-- **django-ninja**: Framework moderno para construção de APIs REST
-- **Pydantic 2.12+**: Validação de dados e serialização
-- **Python 3.13+**: Linguagem de programação
-
-## Arquitetura
-
-O projeto segue princípios de design priorizados:
-
-1. **Zen of Python**: Legibilidade e simplicidade
-2. **DRY**: Evita repetição de código
-3. **KISS**: Mantém soluções simples
-4. **SOLID**: Alta coesão e baixo acoplamento
-
-### Estrutura do Projeto
+## 📦 Arquitetura
 
 ```
-src/
-├── core/              # Configurações centrais e base compartilhada
-│   ├── models.py      # Models base (TimestampedModel, UserOwnedModel)
-│   ├── schemas.py     # Schemas Pydantic base
-│   └── api.py         # Configuração da API principal
-├── tarefas/           # App de gerenciamento de tarefas
-├── calendario/        # App de eventos e calendário
-├── financas/          # App de controle financeiro
-├── notas/             # App de notas e anotações
-├── lembretes/         # App de lembretes
-├── habitos/           # App de rastreamento de hábitos
-├── projetos/          # App de gestão de projetos
-└── analises/          # App de métricas e análises
+.
+├── pyproject.toml          # Root workspace configuration
+├── .env                    # Environment variables (TAVILY_API_KEY, etc.)
+│
+├── api/                    # 📦 Django Application Package
+│   ├── pyproject.toml
+│   ├── manage.py
+│   └── src/
+│       ├── core/           # Django settings & API routes
+│       ├── tarefas/        # Tasks management
+│       ├── calendario/     # Calendar & events
+│       ├── financas/       # Finance tracking
+│       ├── notas/          # Notes & documents
+│       ├── lembretes/      # Reminders
+│       ├── habitos/        # Habit tracking
+│       ├── projetos/       # Project management
+│       └── analises/       # Analytics
+│
+└── jayce/                  # 📦 AI Engine Package (Pure Python)
+    ├── pyproject.toml
+    └── src/jayce/
+        ├── core/           # LangGraph workflows
+        ├── factory.py      # Main facade (entry point)
+        ├── nodes/          # Atomic LLM/Tool nodes
+        ├── schemas/        # Pydantic V2 models
+        └── utils/          # Helper functions
 ```
 
-Cada app contém:
-- `models.py`: Modelos Django com classes de choices
-- `schemas.py`: Schemas Pydantic para validação
-- `routers.py`: Endpoints da API usando django-ninja
+## 🏗️ Princípios de Design
 
-## Instalação
+| Princípio                | Implementação                                             |
+| ------------------------ | --------------------------------------------------------- |
+| **SOLID**                | Jayce é Single Responsibility - apenas orquestração de IA |
+| **Low Coupling**         | Jayce NÃO importa nada de Django/API                      |
+| **Dependency Injection** | Factory pattern com configuração injetada                 |
+| **KISS**                 | Defaults sensíveis, funciona "out of the box"             |
 
-### Pré-requisitos
+## 🚀 Quick Start
 
-- Python 3.13+
-- uv (gerenciador de pacotes)
-
-### Setup
-
-1. Clone o repositório:
 ```bash
-git clone <repository-url>
+# Clone e entre no diretório
 cd assistente
+
+# Sync todas as dependências do workspace
+uv sync --all-packages
+
+# Rodar servidor Django
+uv run python api/manage.py runserver
+
+# Ou usar o CLI do Jayce diretamente
+uv run jayce
 ```
 
-2. Instale as dependências:
-```bash
-uv sync
+## 💡 Uso do Jayce (AI Engine)
+
+```python
+from jayce import create_assistant, JayceConfig
+
+# Com defaults (Ollama llama3.1)
+assistant = create_assistant()
+response = assistant.chat("O que é LangGraph?")
+
+# Com configuração customizada
+config = JayceConfig(
+    model_name="openai:gpt-4o",
+    temperature=0.5,
+    system_prompt="Você é um assistente de produtividade..."
+)
+assistant = create_assistant(config)
 ```
 
-3. Execute as migrações:
-```bash
-uv run python src/manage.py migrate
+## 🔧 Configuração
+
+Crie um arquivo `.env` na raiz:
+
+```env
+# AI/LLM
+TAVILY_API_KEY=tvly-xxxxxxxxxxxxx   # Para web search
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx  # Se usar OpenAI
+
+# Django
+SECRET_KEY=your-secret-key-here
+DEBUG=True
 ```
 
-4. Crie um superusuário (opcional):
-```bash
-uv run python src/manage.py createsuperuser
-```
+## 📡 API Endpoints
 
-5. Inicie o servidor:
-```bash
-uv run python src/manage.py runserver
-```
+Após iniciar o servidor, acesse:
 
-## API
+- **Swagger UI**: http://localhost:8000/api/docs
+- **Chat endpoint**: `POST /api/chat/`
+  ```json
+  {
+    "message": "O que tenho na agenda hoje?",
+    "thread_id": "optional-thread-id"
+  }
+  ```
 
-A API está disponível em `/api/` e a documentação interativa em `/api/docs`.
-
-### Endpoints Principais
-
-- `GET /api/tarefas/` - Lista todas as tarefas
-- `POST /api/tarefas/` - Cria uma nova tarefa
-- `GET /api/calendario/` - Lista todos os eventos
-- `POST /api/calendario/` - Cria um novo evento
-- `GET /api/financas/` - Lista todas as transações
-- `POST /api/financas/` - Cria uma nova transação
-- `GET /api/notas/` - Lista todas as notas
-- `POST /api/notas/` - Cria uma nova nota
-- `GET /api/lembretes/` - Lista todos os lembretes
-- `POST /api/lembretes/` - Cria um novo lembrete
-- `GET /api/habitos/` - Lista todos os hábitos
-- `POST /api/habitos/` - Cria um novo hábito
-- `GET /api/projetos/` - Lista todos os projetos
-- `POST /api/projetos/` - Cria um novo projeto
-- `GET /api/analises/` - Lista todas as métricas
-- `POST /api/analises/` - Cria uma nova métrica
-
-Cada recurso suporta operações CRUD completas (Create, Read, Update, Delete).
-
-### Autenticação
-
-A API utiliza autenticação do Django (`django_auth`). Todas as requisições requerem autenticação de usuário.
-
-## Desenvolvimento
-
-### Executar testes
-
-```bash
-uv run python src/manage.py test
-```
-
-### Criar migrações
+## 🧪 Testes
 
 ```bash
-uv run python src/manage.py makemigrations
+# Rodar todos os testes
+uv run pytest
+
+# Apenas Jayce
+uv run pytest jayce/tests
+
+# Apenas API
+uv run pytest api/tests
 ```
 
-### Aplicar migrações
+## 📚 Packages
+
+| Package   | Descrição               | Dependências                   |
+| --------- | ----------------------- | ------------------------------ |
+| **jayce** | AI Engine com LangGraph | langchain, langgraph, pydantic |
+| **api**   | Django REST API         | django, django-ninja, jayce    |
+
+## 🛠️ Desenvolvimento
 
 ```bash
-uv run python src/manage.py migrate
+# Lint com Ruff
+uv run ruff check .
+uv run ruff format .
+
+# Type check com Pyright
+uv run pyright
+
+# Adicionar dependência ao Jayce
+cd jayce && uv add <package>
+
+# Adicionar dependência à API
+cd api && uv add <package>
 ```
+
+---
+
+**Built with ❤️ using uv Workspaces, LangGraph, and Django 6.0**

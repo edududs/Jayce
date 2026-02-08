@@ -1,22 +1,95 @@
+# =============================================================================
+# ROOT WORKSPACE MANIFEST
+# =============================================================================
+# Este é o pyproject.toml raiz que orquestra o monorepo com uv workspaces.
+# Ele não é um package em si, apenas define quais membros fazem parte do workspace.
+# =============================================================================
+
 [project]
-name = "assistente"
+name = "assistente-workspace"
 version = "0.1.0"
-description = "Add your description here"
+description = "Monorepo workspace para o Assistente de Produtividade com AI"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "django>=6.0",
-    "django-ninja>=1.5.1",
-    "django-stubs>=5.2.8",
-    "pydantic>=2.12.5",
-]
+# Workspace roots não devem ter dependências - elas vivem nos packages membros
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
+# =============================================================================
+# UV WORKSPACE CONFIGURATION
+# =============================================================================
+# Define os packages membros do monorepo. O uv resolve dependências locais
+# automaticamente quando usamos `package = { workspace = true }`.
+# =============================================================================
 
-[project.scripts]
-dj = "src.manage:main"
+[tool.uv]
+managed = true
+package = false  # Este arquivo raiz não é um package instalável
+
+[tool.uv.workspace]
+members = ["api", "jayce"]
+
+# =============================================================================
+# SOURCES - Referências locais para desenvolvimento
+# =============================================================================
+
+[tool.uv.sources]
+jayce = { workspace = true }
+api = { workspace = true }
+
+# =============================================================================
+# SHARED TOOLING CONFIGURATION
+# =============================================================================
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+fix = true
+show-fixes = true
+indent-width = 4
+exclude = [".venv", "__pycache__", ".ruff_cache"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "T201",   # print statements (útil em dev)
+    "COM812", # trailing commas
+    "INP001", # missing __init__.py
+    "D",      # pydocstyle (documentação detalhada)
+    "ANN401", # Any type annotations
+    "ERA001", # commented code
+    "A004",   # shadowing builtins
+    "TC"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN201", "S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ruff.lint.isort]
+known-first-party = ["jayce", "api"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.13"
+include = ["api/src", "jayce/src"]
+exclude = [
+    "**/venv",
+    "**/.venv",
+    "**/node_modules",
+    "**/__pycache__",
+]
+venv = ".venv"
+venvPath = "."
+
+[tool.pytest.ini_options]
+addopts = "-s --color=yes --tb=short"
+pythonpath = ["jayce/src", "api/src"]
+testpaths = ["jayce/tests", "api/tests"]
