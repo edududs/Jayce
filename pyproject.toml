@@ -13,7 +13,13 @@ readme = "README.md"
 requires-python = ">=3.13"
 # Workspace roots não devem ter dependências - elas vivem nos packages membros
 dependencies = [
+    "fastapi>=0.129.0",
+    "ipdb>=0.13.13",
+    "neonize>=0.3.14.post0",
+    "psycopg[binary]>=3.3.2",
     "pytest>=9.0.2",
+    "rich>=14.3.2",
+    "typer>=0.23.0",
 ]
 
 [build-system]
@@ -32,7 +38,7 @@ managed = true
 package = false  # Este arquivo raiz não é um package instalável
 
 [tool.uv.workspace]
-members = ["api", "jayce"]
+members = ["api", "jayce", "whatsapp"]
 
 # =============================================================================
 # SOURCES - Referências locais para desenvolvimento
@@ -41,6 +47,7 @@ members = ["api", "jayce"]
 [tool.uv.sources]
 jayce = { workspace = true }
 api = { workspace = true }
+whatsapp = { workspace = true }
 
 # =============================================================================
 # SHARED TOOLING CONFIGURATION
@@ -64,7 +71,14 @@ ignore = [
     "ANN401", # Any type annotations
     "ERA001", # commented code
     "A004",   # shadowing builtins
-    "TC"
+    "DOC201",
+    "TID252",
+    "DOC501",
+    "FBT003",
+    "PLC0415",
+    "TC",
+    "D",
+    "CPY"
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -76,20 +90,21 @@ indent-style = "space"
 line-ending = "lf"
 
 [tool.ruff.lint.isort]
-known-first-party = ["jayce", "api"]
+known-first-party = ["jayce", "api", "whatsapp"]
 
 [tool.pyright]
 typeCheckingMode = "standard"
 pythonVersion = "3.13"
-include = ["api/src", "jayce/src"]
+include = ["api/src/api", "jayce/src/jayce", "whatsapp/src/whatsapp"]
 exclude = [
     "**/venv",
     "**/.venv",
     "**/node_modules",
     "**/__pycache__",
 ]
+reportUnusedParameter = "none"
 
 [tool.pytest.ini_options]
 addopts = "-s --color=yes --tb=short"
-pythonpath = ["jayce/src", "api/src"]
+pythonpath = ["jayce/src", "api/src", "whatsapp/src"]
 testpaths = ["jayce/tests", "api/tests"]
