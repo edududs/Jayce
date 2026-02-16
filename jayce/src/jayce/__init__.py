@@ -1,31 +1,32 @@
-"""
-Jayce - AI Engine for Assistente.
+"""Jayce — AI Engine with Hexagonal Architecture.
 
-A pure Python library for AI orchestration using LangGraph.
-This package is framework-agnostic and has ZERO Django dependencies.
+Public API
+----------
+- ``JayceSettings``: Configuration loaded from .env
+- ``AgentService``: Main agent orchestrator (use case)
+- ``AgentResponse``: Structured response dataclass
+- ``bootstrap``: Configuration & environment bootstrap
+- ``create_agent_service``: Composition root factory
+- ``build_graph``: LangGraph builder (for LangGraph Studio / advanced usage)
 
-Usage:
-    from jayce import create_assistant, JayceConfig
-
-    # With defaults (uses Ollama llama3.1)
-    assistant = create_assistant()
-    
-    # With custom config
-    config = JayceConfig(model_name="openai:gpt-4o")
-    assistant = create_assistant(config)
-    
-    # Run a conversation
-    response = assistant.chat("What's the weather like?")
+Hexagonal layers:
+    domain/          — Core entities, ports (ABCs), routing policy
+    application/     — Use cases (AgentService, bootstrap, graph_builder)
+    infrastructure/  — Adapters (LLM, checkpointer, tools, config)
+    presentation/    — Driving adapters (CLI, formatters)
 """
 
-from jayce.factory import JayceAssistant, create_assistant
-from jayce.schemas.config import JayceConfig
-from jayce.schemas.state import AgentState
+from .application.agent_service import AgentResponse, AgentService
+from .application.bootstrap import bootstrap
+from .application.graph_builder import build_graph
+from .infrastructure.config import JayceSettings
+from .presentation.cli import create_agent_service
 
-__version__ = "0.1.0"
 __all__ = [
-    "create_assistant",
-    "JayceAssistant",
-    "JayceConfig",
-    "AgentState",
+    "AgentResponse",
+    "AgentService",
+    "JayceSettings",
+    "bootstrap",
+    "build_graph",
+    "create_agent_service",
 ]

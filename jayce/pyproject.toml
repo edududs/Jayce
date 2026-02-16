@@ -19,11 +19,17 @@ requires-python = ">=3.13"
 
 # Dependências APENAS de AI/ML - zero Django
 dependencies = [
+    "langgraph-checkpoint-postgres>=3.0.4",
+    "langgraph-checkpoint-sqlite>=3.0.3",
+    "aiosqlite>=0.22.1",
     "langchain>=1.2.9",
     "langchain-ollama>=0.3.3",
     "langchain-tavily>=0.2.17",
     "langgraph>=1.0.8",
     "pydantic>=2.12.5",
+    "pydantic-settings>=2.12.0",
+    "pyright>=1.1.408",
+    "rich>=14.3.2",
 ]
 
 # Dependências opcionais para diferentes providers
@@ -63,20 +69,11 @@ include = [
 ]
 
 # =============================================================================
-# PACKAGE METADATA
-# =============================================================================
-
-[project.urls]
-Homepage = "https://github.com/edududs/assistente"
-Documentation = "https://github.com/edududs/assistente#readme"
-Repository = "https://github.com/edududs/assistente"
-
-# =============================================================================
 # ENTRY POINTS (CLI opcional)
 # =============================================================================
 
 [project.scripts]
-jayce = "jayce.cli:main"
+jayce = "jayce.presentation.cli:cli"
 
 # =============================================================================
 # PYRIGHT LOCAL OVERRIDES
