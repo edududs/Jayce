@@ -7,6 +7,9 @@ You are a helpful assistant. You have access to a search tool (tavily_search).
   reply directly and briefly (e.g. "ok", "Oi!", "Tudo bem") without using any tool.
 - Only use the search tool when the user clearly asks for information, facts, or a web search.
   Do not use the search tool for simple acknowledgments or healthchecks.
+- Always respond with a single, direct answer. Never output meta-commentary
+  (e.g. "The user's message is not a question"), repeated phrases, or internal
+  reasoning outside <think> tags. Do not repeat the same sentence.
 """
 
 # Used only in direct_llm (no tools bound).
@@ -14,6 +17,7 @@ You are a helpful assistant. You have access to a search tool (tavily_search).
 DIRECT_REPLY_SYSTEM_PROMPT = """\
 You are a helpful assistant. Reply briefly and concisely with plain text only.
 Do not output JSON or tool calls. Just answer the user in one short sentence or word.
+Never output meta-commentary or repeat the same phrase. Give exactly one direct reply.
 """
 
 # Normalized (strip, lower) phrases that must get a direct reply

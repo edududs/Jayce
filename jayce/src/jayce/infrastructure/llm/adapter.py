@@ -10,46 +10,70 @@ No manual JSON parsing or fallbacks are needed.
 
 import re
 from collections.abc import Sequence
-from typing import cast
+from typing import Any, TypedDict, Unpack, cast
 
 from langchain.chat_models import BaseChatModel, init_chat_model
 from langchain.tools import BaseTool
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
+from pydantic import BaseModel, ConfigDict
 
 from ...domain.ports import LLMPort
 from ...domain.prompts import DIRECT_REPLY_SYSTEM_PROMPT, SYSTEM_PROMPT
+
+PAYLOAD_OR_KWARGS_MSG = "Provide either 'payload' or keyword arguments, not both."
+
+
+class LangChainLLMAdapterPayloadTypedDict(TypedDict, total=False):
+    """Keyword arguments for LangChainLLMAdapter; all fields optional."""
+
+    model: str
+    thinking_model: str
+    provider: str
+    base_url: str
+    temperature: float
+    max_tokens: int
+
+
+class LangChainLLMAdapterPayload(BaseModel):
+    """Payload for LangChainLLMAdapter. Validates dict or object (extra fields ignored)."""
+
+    model: str = "llama3.1"
+    thinking_model: str = "deepseek-r1"
+    provider: str = "ollama"
+    base_url: str = "http://127.0.0.1:11434"
+    temperature: float = 0.2
+    max_tokens: int = 4096
+
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
 
 
 class LangChainLLMAdapter(LLMPort):
     """Concrete LLM adapter using LangChain's ``init_chat_model``.
 
-    Parameters
-    ----------
-    model : str
-        Model name for general use (e.g. ``"llama3.1"``).
-    thinking_model : str
-        Model name for deep reasoning (e.g. ``"deepseek-r1"``).
-    provider : str
-        Model provider (e.g. ``"ollama"``).
-    base_url : str
-        Base URL for the model API.
-    temperature : float
-        Sampling temperature.
+    Accepts either a single ``payload`` (dict or object with the expected attributes)
+    or keyword arguments. Extra keys/attributes are ignored.
     """
 
     def __init__(
         self,
-        model: str = "llama3.1",
-        thinking_model: str = "deepseek-r1",
-        provider: str = "ollama",
-        base_url: str = "http://127.0.0.1:11434",
-        temperature: float = 0.2,
+        *,
+        payload: LangChainLLMAdapterPayload | dict[str, Any] | None = None,
+        **kwargs: Unpack[LangChainLLMAdapterPayloadTypedDict],
     ) -> None:
-        self._model = model
-        self._thinking_model = thinking_model
-        self._provider = provider
-        self._base_url = base_url
-        self._temperature = temperature
+        if payload is not None and kwargs:
+            raise TypeError(PAYLOAD_OR_KWARGS_MSG)
+        if payload is not None:
+            validated = LangChainLLMAdapterPayload.model_validate(payload)
+        elif kwargs:
+            validated = LangChainLLMAdapterPayload.model_validate(kwargs)
+        else:
+            validated = LangChainLLMAdapterPayload()
+        self._model = validated.model
+        self._thinking_model = validated.thinking_model
+        self._provider = validated.provider
+        self._base_url = validated.base_url
+        self._temperature = validated.temperature
+        self._max_tokens = validated.max_tokens
         self._llm = self._build_llm()
 
     def _build_llm(self) -> BaseChatModel:
@@ -61,18 +85,22 @@ class LangChainLLMAdapter(LLMPort):
                 base_url=self._base_url,
                 temperature=self._temperature,
                 configurable_fields="any",
+                num_predict=self._max_tokens,
             ),
         )
 
     def _configured(self, *, model: str | None = None) -> BaseChatModel:
         """Return the LLM with model/provider config applied."""
-        return self._llm.with_config(
-            config={
-                "configurable": {
-                    "model": model or self._model,
-                    "model_provider": self._provider,
+        return cast(
+            BaseChatModel,
+            self._llm.with_config(
+                config={
+                    "configurable": {
+                        "model": model or self._model,
+                        "model_provider": self._provider,
+                    }
                 }
-            }
+            ),
         )
 
     def invoke(
@@ -106,12 +134,19 @@ class LangChainLLMAdapter(LLMPort):
 
         raw_content = result.content or ""
         thinking_traces: list[str] = []
-        clean_content = raw_content
 
-        if "<think>" in raw_content:
-            pattern = re.compile(r"<think>(.*?)</think>", re.DOTALL)
-            thinking_traces = pattern.findall(raw_content)
-            clean_content = pattern.sub("", raw_content).strip()
+        # More robust and modern: type-safe, precompiled regex, concise, handles edge cases
+        think_tag_pattern = re.compile(r"<think>(.*?)</think>", re.DOTALL)
+
+        def extract_thinking(content: str | list[str | dict[Any, Any]]) -> tuple[str, list[str]]:
+            """Extract <think>...</think> traces; return cleaned content and list of traces."""
+            if not isinstance(content, str) or "<think>" not in content:
+                return content if isinstance(content, str) else "", []
+            thinking = think_tag_pattern.findall(content)
+            cleaned = think_tag_pattern.sub("", content).strip()
+            return cleaned, thinking
+
+        clean_content, thinking_traces = extract_thinking(raw_content)
 
         return AIMessage(
             content=clean_content,
@@ -119,6 +154,8 @@ class LangChainLLMAdapter(LLMPort):
             usage_metadata=result.usage_metadata,
             additional_kwargs={
                 **(result.additional_kwargs or {}),
-                "thinking": "\n\n".join(t.strip() for t in thinking_traces) if thinking_traces else None,
+                "thinking": "\n\n".join(t.strip() for t in thinking_traces)
+                if thinking_traces
+                else None,
             },
         )
