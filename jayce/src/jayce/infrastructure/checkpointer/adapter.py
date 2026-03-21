@@ -19,8 +19,9 @@ from ...domain.ports import CheckpointPort
 class MemoryCheckpointAdapter(CheckpointPort):
     """In-memory checkpoint adapter for development/testing."""
 
+    @staticmethod
     @asynccontextmanager
-    async def get_saver(self) -> AsyncGenerator[InMemorySaver]:
+    async def get_saver() -> AsyncGenerator[InMemorySaver]:  # pyright: ignore[reportIncompatibleMethodOverride]
         yield InMemorySaver()
 
 
@@ -35,10 +36,10 @@ class SqliteCheckpointAdapter(CheckpointPort):
         # Explicitly manage aiosqlite connection to control thread affinity
         # and prevent implicit re-connection attempts.
         import aiosqlite
-        
+
         # Determine path from DSN (sqlite:///path or just path)
         path = self._db_dsn.replace("sqlite:///", "") if "://" in self._db_dsn else self._db_dsn
-        
+
         async with aiosqlite.connect(path, check_same_thread=False) as conn:
             saver = AsyncSqliteSaver(conn)
             # Setup tables if needed (AsyncSqliteSaver might not do it automatically if passed a conn)

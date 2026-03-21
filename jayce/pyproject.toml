@@ -1,13 +1,13 @@
 # =============================================================================
 # JAYCE - AI ENGINE PACKAGE
 # =============================================================================
-# Package independente de orquestração de IA usando LangGraph.
-# Este package é uma biblioteca PURA e NÃO deve importar nada de `api`.
+# AI orchestration package using LangGraph.
+# This package is PURE and MUST NOT import anything from `api`.
 #
-# Princípios:
-# - SOLID: Single Responsibility - apenas orquestração de AI
-# - Low Coupling: Zero dependências de Django ou do package `api`
-# - DI: Factory pattern para injeção de configuração
+# Principles:
+# - SOLID: Single Responsibility - only AI orchestration
+# - Low Coupling: Zero dependencies on Django or the `api` package
+# - DI: Factory pattern for configuration injection
 # =============================================================================
 
 [project]
@@ -17,7 +17,7 @@ description = "AI Engine - LangGraph orchestration library for Assistente"
 readme = "README.md"
 requires-python = ">=3.13"
 
-# Dependências APENAS de AI/ML - zero Django
+# AI/ML dependencies ONLY - no Django
 dependencies = [
     "langgraph-checkpoint-postgres>=3.0.4",
     "langgraph-checkpoint-sqlite>=3.0.3",
@@ -32,7 +32,7 @@ dependencies = [
     "rich>=14.3.2",
 ]
 
-# Dependências opcionais para diferentes providers
+# Optional dependencies for different providers
 [project.optional-dependencies]
 openai = ["langchain-openai>=0.3.0"]
 anthropic = ["langchain-anthropic>=0.3.0"]
@@ -55,7 +55,7 @@ build-backend = "hatchling.build"
 # =============================================================================
 # HATCH BUILD CONFIGURATION
 # =============================================================================
-# Define a estrutura src layout para o package
+# Define src layout structure for the package
 # =============================================================================
 
 [tool.hatch.build.targets.wheel]
@@ -69,7 +69,7 @@ include = [
 ]
 
 # =============================================================================
-# ENTRY POINTS (CLI opcional)
+# ENTRY POINTS (optional CLI)
 # =============================================================================
 
 [project.scripts]

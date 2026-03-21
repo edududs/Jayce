@@ -6,8 +6,6 @@ outside world. The infrastructure layer provides concrete adapters.
 Design principle: the domain NEVER imports concrete implementations.
 """
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
 from typing import TYPE_CHECKING
