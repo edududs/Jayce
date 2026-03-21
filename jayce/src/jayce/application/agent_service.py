@@ -11,10 +11,9 @@ Design:
 - Exposes ``build_compiled_graph()`` for consumers needing the raw graph
 """
 
-from __future__ import annotations
-
+from collections.abc import AsyncGenerator, Callable
+from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph.state import CompiledStateGraph
@@ -93,7 +92,7 @@ class AgentService:
         self._tools = tools
         self._checkpoint = checkpoint
 
-    def _make_direct_llm_node(self):
+    def _make_direct_llm_node(self) -> Callable[[State, Runtime[Context]], State]:
         """Create the direct_llm node (no tools, for healthchecks)."""
         llm = self._llm
 
@@ -104,7 +103,7 @@ class AgentService:
 
         return direct_llm
 
-    def _make_call_llm_node(self):
+    def _make_call_llm_node(self) -> Callable[[State, Runtime[Context]], State]:
         """Create the call_llm node (with tools).
 
         When ``ctx.thinking`` is True, a two-model strategy is used:
@@ -140,23 +139,28 @@ class AgentService:
         """Create the tools execution node."""
         return ToolNode(tools=self._tools.get_tools())
 
-    async def build_compiled_graph(self):
-        """Build and return the compiled graph as an async context manager.
+    def build_compiled_graph(
+        self,
+    ) -> AbstractAsyncContextManager[CompiledStateGraph[State, Context, State, State]]:
+        """
+        Asynchronously builds and returns the compiled graph as an async context manager.
 
+        Example
+        -------
         Usage::
 
             async with agent.build_compiled_graph() as graph:
                 result = await graph.ainvoke(...)
 
-        Yields
-        ------
-        CompiledStateGraph
-            The compiled LangGraph ready for invocation.
+        Returns
+        -------
+        AsyncContextManager[CompiledStateGraph]
+            An async context manager that yields the compiled LangGraph ready for invocation.
         """
         from contextlib import asynccontextmanager
 
         @asynccontextmanager
-        async def _graph_ctx():
+        async def _graph_ctx() -> AsyncGenerator[CompiledStateGraph[State, Context, State, State]]:
             async with self._checkpoint.get_saver() as saver:
                 graph = build_graph(
                     checkpointer=saver,
@@ -169,8 +173,8 @@ class AgentService:
 
         return _graph_ctx()
 
+    @staticmethod
     async def send_message(
-        self,
         graph: CompiledStateGraph,
         message: str,
         *,
@@ -201,14 +205,16 @@ class AgentService:
         config = RunnableConfig(configurable={"thread_id": thread_id})
         current_state = State(messages=[HumanMessage(message)])
 
-        result = await graph.ainvoke(current_state, config=config, context=context)
+        result = await graph.ainvoke(current_state, config=config, context=context)  # pyright: ignore[reportArgumentType]
 
         last_message = result["messages"][-1]
         if isinstance(last_message, AIMessage):
             return _extract_response(last_message)
 
         return AgentResponse(
-            content=last_message.text if hasattr(last_message, "text") else str(last_message.content),
+            content=last_message.text
+            if hasattr(last_message, "text")
+            else str(last_message.content),
             model_name="",
             input_tokens=None,
             output_tokens=None,
